@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate
 @Component
 class DataConsumer(
         private val restTemplate: RestTemplate,
-        private val rateLimiter: RateLimiter
+        private val rateLimiterRegistry: RateLimiterRegistry
 ) {
 
     private val logger = KotlinLogging.logger()
@@ -21,7 +21,7 @@ class DataConsumer(
     @EventListener
     fun onApplicationRun(applicationStartedEvent: ApplicationStartedEvent) {
         for (i in 0..99) {
-            val body = rateLimiter.executeSupplier {
+            val body = rateLimiterRegistry.rateLimiter("2rps").executeSupplier {
                 restTemplate.getForEntity("/data", DataSnapshot::class.java)
             }.body
 

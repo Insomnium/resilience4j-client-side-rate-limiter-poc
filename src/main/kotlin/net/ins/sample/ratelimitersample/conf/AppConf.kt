@@ -1,6 +1,5 @@
 package net.ins.sample.ratelimitersample.conf
 
-import io.github.resilience4j.ratelimiter.RateLimiter
 import io.github.resilience4j.ratelimiter.RateLimiterConfig
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry
 import org.springframework.boot.web.client.RestTemplateBuilder
@@ -18,14 +17,24 @@ class AppConf {
             .build()
 
     @Bean
-    fun rateLimiter(): RateLimiter {
-        val rpsConf = RateLimiterConfig.custom()
+    fun rateLimiter(): RateLimiterRegistry {
+        val oneRpsConf = RateLimiterConfig.custom()
+                .limitForPeriod(1)
+                .timeoutDuration(Duration.of(5, ChronoUnit.SECONDS))
+                .limitRefreshPeriod(Duration.of(1, ChronoUnit.SECONDS))
+                .build()
+
+        val twoRpsConf = RateLimiterConfig.custom()
                 .limitForPeriod(2)
                 .timeoutDuration(Duration.of(5, ChronoUnit.SECONDS))
                 .limitRefreshPeriod(Duration.of(1, ChronoUnit.SECONDS))
                 .build()
-        val registry = RateLimiterRegistry.of(rpsConf)
 
-        return registry.rateLimiter("1rps", rpsConf)
+        val registry = RateLimiterRegistry.of(twoRpsConf)
+
+        registry.rateLimiter("1rps", oneRpsConf)
+        registry.rateLimiter("2rps", twoRpsConf)
+
+        return registry
     }
 }
