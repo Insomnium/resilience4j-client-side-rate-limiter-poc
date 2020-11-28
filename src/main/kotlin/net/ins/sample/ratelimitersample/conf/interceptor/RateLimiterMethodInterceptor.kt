@@ -18,12 +18,12 @@ class RateLimiterMethodInterceptor(
     private val limitersByMethod = mutableMapOf<String, String>()
 
     @Around("@annotation(net.ins.sample.ratelimitersample.conf.meta.RateLimited)")
-    fun limitRate(proceedingJoinPoint: ProceedingJoinPoint): Any {
-        val limiterName = resolveRateLimiterName(proceedingJoinPoint)
-        return rateLimiterRegistry.rateLimiter(limiterName).executeSupplier {
-            proceedingJoinPoint.proceed()
+    fun limitRate(proceedingJoinPoint: ProceedingJoinPoint): Any =
+        with(resolveRateLimiterName(proceedingJoinPoint)) {
+            rateLimiterRegistry.rateLimiter(this).executeSupplier {
+                proceedingJoinPoint.proceed()
+            }
         }
-    }
 
     private fun resolveRateLimiterName(proceedingJoinPoint: ProceedingJoinPoint): String {
         val methodSignature = proceedingJoinPoint.signature as MethodSignature
