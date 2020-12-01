@@ -14,10 +14,12 @@ import java.util.function.Function
 
 @Aspect
 @Component
-class RateLimiterMethodInterceptor {
+class RateLimiterMethodInterceptor(
+        private val rateLimiterConfigProps: RateLimiterConfigProps
+) {
 
     private val rateLimiterRegistry = RateLimiterRegistry.ofDefaults()
-    private val limiterAnnotationsByMethod = mutableMapOf<String, RateLimited>()
+    private val limiterAnnotationsByMethod = mutableMapOf<String, RateLimiterConfProp>()
     private val limitersByMethod = mutableMapOf<String, RateLimiter>()
 
     @Around("@annotation(net.ins.sample.ratelimitersample.conf.meta.RateLimited)")
@@ -33,7 +35,7 @@ class RateLimiterMethodInterceptor {
                 limitersByMethod.computeIfAbsent(this.toString(), Function {
                     val limiter = resolveRateLimiterAnnotation(proceedingJoinPoint)
                     val rateLimiterConfig = RateLimiterConfig.custom()
-                            .limitForPeriod(limiter.value)
+                            .limitForPeriod(limiter.requests)
                             .limitRefreshPeriod(Duration.of(1, limiter.per))
                             .timeoutDuration(Duration.of(limiter.timeout, limiter.timeoutIn))
                             .build()
@@ -41,14 +43,15 @@ class RateLimiterMethodInterceptor {
                 })
             }
 
-    private fun resolveRateLimiterAnnotation(proceedingJoinPoint: ProceedingJoinPoint): RateLimited =
+    private fun resolveRateLimiterAnnotation(proceedingJoinPoint: ProceedingJoinPoint): RateLimiterConfProp =
             with(proceedingJoinPoint.signature as MethodSignature) {
-                return limiterAnnotationsByMethod.computeIfAbsent(this.toString()) {
+                limiterAnnotationsByMethod.computeIfAbsent(this.toString()) {
                     proceedingJoinPoint
                             .target
                             .javaClass
                             .getMethod(this.name, *this.parameterTypes)
                             .getAnnotation(RateLimited::class.java)
+                            .let { rateLimiterConfigProps.limits[it.value]!! }
                 }
             }
 }

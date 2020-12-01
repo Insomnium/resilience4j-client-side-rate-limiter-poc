@@ -11,6 +11,6 @@ class DataConsumerService(
         private val restTemplate: RestTemplate
 ) {
 
-    @RateLimited(5, per = ChronoUnit.SECONDS)
+    @RateLimited("data-provider")
     fun consumeData() = restTemplate.getForEntity("/data", DataSnapshot::class.java).body
 }

@@ -1,0 +1,6 @@
+msa:
+  rate-limiter:
+    limits:
+      data-provider:
+        requests: 10
+        per: SECONDS

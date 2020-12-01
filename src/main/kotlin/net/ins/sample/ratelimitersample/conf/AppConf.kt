@@ -2,6 +2,8 @@ package net.ins.sample.ratelimitersample.conf
 
 import io.github.resilience4j.ratelimiter.RateLimiterConfig
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry
+import net.ins.sample.ratelimitersample.conf.interceptor.RateLimiterConfigProps
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -9,6 +11,7 @@ import java.time.Duration
 import java.time.temporal.ChronoUnit
 
 @Configuration
+@EnableConfigurationProperties(RateLimiterConfigProps::class)
 class AppConf {
 
     @Bean
