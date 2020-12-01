@@ -28,27 +28,27 @@ class RateLimiterMethodInterceptor {
                 }
             }
 
-    private fun resolveRateLimiter(proceedingJoinPoint: ProceedingJoinPoint): RateLimiter {
-        val methodSignature = proceedingJoinPoint.signature as MethodSignature
-        return limitersByMethod.computeIfAbsent(methodSignature.toString(), Function {
-            val limiter = resolveRateLimiterAnnotation(proceedingJoinPoint)
-            val rateLimiterConfig = RateLimiterConfig.custom()
-                    .limitForPeriod(limiter.value)
-                    .limitRefreshPeriod(Duration.of(1, limiter.per))
-                    .timeoutDuration(Duration.of(limiter.timeout, limiter.timeoutIn))
-                    .build()
-            return@Function rateLimiterRegistry.rateLimiter(methodSignature.toString(), rateLimiterConfig)
-        })
-    }
+    private fun resolveRateLimiter(proceedingJoinPoint: ProceedingJoinPoint): RateLimiter =
+            with(proceedingJoinPoint.signature as MethodSignature) {
+                limitersByMethod.computeIfAbsent(this.toString(), Function {
+                    val limiter = resolveRateLimiterAnnotation(proceedingJoinPoint)
+                    val rateLimiterConfig = RateLimiterConfig.custom()
+                            .limitForPeriod(limiter.value)
+                            .limitRefreshPeriod(Duration.of(1, limiter.per))
+                            .timeoutDuration(Duration.of(limiter.timeout, limiter.timeoutIn))
+                            .build()
+                    return@Function rateLimiterRegistry.rateLimiter(this.toString(), rateLimiterConfig)
+                })
+            }
 
-    private fun resolveRateLimiterAnnotation(proceedingJoinPoint: ProceedingJoinPoint): RateLimited {
-        val methodSignature = proceedingJoinPoint.signature as MethodSignature
-        return limiterAnnotationsByMethod.computeIfAbsent(methodSignature.toString(), Function {
-            proceedingJoinPoint
-                    .target
-                    .javaClass
-                    .getMethod(methodSignature.name, *methodSignature.parameterTypes)
-                    .getAnnotation(RateLimited::class.java)
-        })
-    }
+    private fun resolveRateLimiterAnnotation(proceedingJoinPoint: ProceedingJoinPoint): RateLimited =
+            with(proceedingJoinPoint.signature as MethodSignature) {
+                return limiterAnnotationsByMethod.computeIfAbsent(this.toString()) {
+                    proceedingJoinPoint
+                            .target
+                            .javaClass
+                            .getMethod(this.name, *this.parameterTypes)
+                            .getAnnotation(RateLimited::class.java)
+                }
+            }
 }
